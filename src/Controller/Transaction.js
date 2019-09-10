@@ -1,0 +1,45 @@
+const Model = require('../Model/Transaction')
+const Store = require('../Config/Store')
+
+const TransactionController = class Transaction {
+
+  static setTransaction(transaction){
+
+    if (Object.keys(transaction).length === 0 && transaction.constructor !== Object) {
+      return {
+        status: 400,
+        message: 'transaction is not defined or not object'
+      }
+    }
+
+    if (transaction.merchant === null || transaction.merchant === undefined ||  typeof transaction.merchant !== "string") {
+      return {
+        status: 400,
+        message: 'merchant is not defined or not string'
+      }
+    }
+
+    if (transaction.amount === null || transaction.amount === undefined || !Number.isInteger(transaction.amount)) {
+      return {
+        status: 400,
+        message: 'availableLimit is not defined or not integer'
+      }
+    }
+
+    if (transaction.time === null || transaction.time === undefined || new Date(transaction.time).toString() === 'Invalid Date') {
+      return {
+        status: 400,
+        message: 'time is not defined or not valid date'
+      }
+    }
+
+
+
+    transaction.timestamp = new Date(transaction.time).getTime()
+
+    return Model.setTransaction(transaction)
+  }
+
+}
+
+module.exports = TransactionController
