@@ -2,6 +2,10 @@ const Store = require('../Config/Store')
 
 const AuthModel = class AuthModel {
 
+  static getClient() {
+    return Store.get('account')
+  }
+
   static setClient(account){
 
     try {
