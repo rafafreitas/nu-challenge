@@ -2,7 +2,11 @@ const Store = require('../Config/Store')
 
 const TransactionModel = class Transaction {
 
-  static setTransaction(transaction){
+  static getTransactions () {
+    return Store.get('transactions')
+  }
+
+  static setNewTransaction (transaction, account){
 
     try {
 
@@ -30,6 +34,49 @@ const TransactionModel = class Transaction {
         message: e.message
       }
     }
+  }
+
+  static verifyHighFrequencySmallInterval (transaction) {
+
+    try {
+
+      if (this.hasTransactionsAndAreArray()) {
+        const transactions = this.getTransactions();
+        const found = transactions.filter(elm =>  elm.timestamp >= (transaction.timestamp - 120000))
+        return found.length >= 3
+      }
+
+      return false
+    } catch (e) {
+      return {
+        status: 500,
+        message: e.message
+      }
+    }
+  }
+
+  static verifyDoubledTransaction (transaction){
+
+    try {
+
+      if (this.hasTransactionsAndAreArray()) {
+        const transactions = this.getTransactions()
+        const found = transactions.filter(elm => elm.merchant === transaction.merchant && elm.amount === transaction.amount && elm.timestamp >= (transaction.timestamp - 120000))
+        return found.length >= 2
+      }
+
+      return false
+
+    }catch (e) {
+      return {
+        status: 500,
+        message: e.message
+      }
+    }
+  }
+
+  static hasTransactionsAndAreArray () {
+    return ( Store.has('transactions') && Array.isArray(Store.get('transactions')) )
   }
 
 }
