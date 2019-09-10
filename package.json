@@ -4,12 +4,16 @@
   "description": "nu-challenge",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "test": "test"
+    "start": "SET ENV_DB_BASE=base&& node index.js",
+    "test": "SET ENV_DB_BASE=test&& jest"
   },
   "author": "Rafael Freitas",
   "dependencies": {
     "data-store": "3.1.0",
     "express": "4.17.1"
+  },
+  "devDependencies": {
+    "jest": "^24.9.0",
+    "supertest": "4.0.2"
   }
 }
