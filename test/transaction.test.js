@@ -1,6 +1,7 @@
 const request = require('supertest');
 const express = require('express');
 const transactions = require('../src/Routes/transactions.js');
+const Store = require('../src/Config/Store');
 
 const app = express();
 app.use(express.json())
@@ -113,5 +114,27 @@ describe('Verify transactions', () => {
       expect(res.text).toBe('time is not defined');
     })
   })
+
+  it('Validate insert - (Account) ?', async () => {
+    const payload_verify_time_is_null = { transaction: { time: null, merchant: "Burger King", amount: 20 } }
+    const payload_verify_time_is_date = { transaction: { time: "2019-00.000Z", merchant: "Burger King", amount: 20 } }
+    const payload_verify_time_is_undefined = { transaction: {merchant: "Burger King", amount: 20} }
+
+    await request(app).post('/transaction').send(payload_verify_time_is_null).then((res) => {
+      expect(res.status).toBe(400);
+      expect(res.text).toBe('time is not defined');
+    })
+
+    await request(app).post('/transaction').send(payload_verify_time_is_date).then((res) => {
+      expect(res.status).toBe(400);
+      expect(res.text).toBe('time is not valid date');
+    })
+
+    await request(app).post('/transaction').send(payload_verify_time_is_undefined).then((res) => {
+      expect(res.status).toBe(400);
+      expect(res.text).toBe('time is not defined');
+    })
+  })
+
 
 });
