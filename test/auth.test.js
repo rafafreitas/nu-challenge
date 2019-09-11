@@ -48,16 +48,10 @@ describe('Auth account', () => {
       });
   })
 
-  it('Validate payload - (account and activeCard) ?', async () => {
-    const payload_verify_is_object = { account: 'test' }
+  it('Validate payload - (activeCard) ?', async () => {
     const payload_verify_activeCard_is_null = { account: { activeCard: null, availableLimit: 100 } }
     const payload_verify_activeCard_is_boolean = { account: { activeCard: 1, availableLimit: 100 } }
     const payload_verify_activeCard_is_undefined = { account: { availableLimit: 100 } }
-
-    await request(app).post('/auth').send(payload_verify_is_object).then((res) => {
-      expect(res.status).toBe(400);
-      expect(res.text).toBe('account is not defined or not object');
-    })
 
     await request(app).post('/auth').send(payload_verify_activeCard_is_null).then((res) => {
       expect(res.status).toBe(400);
@@ -93,6 +87,20 @@ describe('Auth account', () => {
     await request(app).post('/auth').send(payload_verify_availableLimit_is_undefined).then((res) => {
       expect(res.status).toBe(400);
       expect(res.text).toBe('availableLimit is not defined');
+    })
+  })
+
+  it('Validate payload - (account) ?', async () => {
+    const payload_verify = { other: 123 }
+    const payload_verify_is_object = { account: 'test' }
+
+    await request(app).post('/auth').send(payload_verify).then((res) => {
+      expect(res.status).toBe(500);
+    })
+
+    await request(app).post('/auth').send(payload_verify_is_object).then((res) => {
+      expect(res.status).toBe(400);
+      expect(res.text).toBe('account is not defined or not object');
     })
   })
 
