@@ -5,7 +5,7 @@ const AuthController = class Auth {
 
   static setClient(account){
 
-    if (Object.keys(account).length === 0 && account.constructor !== Object) {
+    if (account.constructor !== Object) {
       return { status: 400, message: 'account is not defined or not object' }
     }
 
@@ -13,8 +13,12 @@ const AuthController = class Auth {
       return { status: 400, message: 'activeCard is not defined or not boolean' }
     }
 
-    if (account.availableLimit === null || account.availableLimit === undefined || !Number.isInteger(account.availableLimit)) {
-      return { status: 400, message: 'availableLimit is not defined or not integer' }
+    if (account.availableLimit === null || account.availableLimit === undefined) {
+      return { status: 400, message: 'availableLimit is not defined' }
+    }
+
+    if (!Number.isInteger(account.availableLimit)) {
+      return { status: 400, message: 'availableLimit is not integer' }
     }
 
     if (Store.has('account')) {
