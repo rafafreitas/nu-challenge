@@ -4,8 +4,9 @@
   "description": "nu-challenge",
   "main": "index.js",
   "scripts": {
-    "start": "SET ENV_DB_BASE=base&& node index.js",
-    "test": "SET ENV_DB_BASE=test&& jest"
+    "start": "cross-env NODE_ENV_DB_BASE=base node index.js",
+    "test:windows": "del /f test.json && cross-env NODE_ENV_DB_BASE=test jest --runInBand --coverage",
+    "test:unix": "rm -rf ./test.json && cross-env NODE_ENV_DB_BASE=test jest --runInBand --coverage"
   },
   "author": "Rafael Freitas",
   "dependencies": {
@@ -13,7 +14,14 @@
     "express": "4.17.1"
   },
   "devDependencies": {
+    "cross-env": "^5.2.1",
     "jest": "^24.9.0",
     "supertest": "4.0.2"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "coveragePathIgnorePatterns": [
+      "/node_modules/"
+    ]
   }
 }
