@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "start": "cross-env NODE_ENV_DB_BASE=base node index.js",
-    "test:windows": "del /f test.json && cross-env NODE_ENV_DB_BASE=test jest --runInBand --coverage",
-    "test:unix": "rm -rf ./test.json && cross-env NODE_ENV_DB_BASE=test jest --runInBand --coverage"
+    "test:windows": "del /f test.json && cross-env NODE_ENV_DB_BASE=test jest test/index.spec.js --runInBand --coverage",
+    "test:unix": "rm -rf ./test.json && cross-env NODE_ENV_DB_BASE=test jest test/index.spec.js --runInBand --coverage"
   },
   "author": "Rafael Freitas",
   "dependencies": {
