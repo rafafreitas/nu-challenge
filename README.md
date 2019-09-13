@@ -19,11 +19,15 @@ npm install
 
 # Run
 ```sh
-// listen http://localhost:3000/
+// listen API http://localhost:3000/
 npm run start
 ```
 
 # Tests
 ```sh
-npm run test
+// Unix tests
+npm run test:unix
+
+// Windows tests
+npm run test:windows
 ```
