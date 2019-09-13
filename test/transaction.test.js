@@ -1,42 +1,89 @@
 const request = require('supertest');
 const express = require('express');
 const transactions = require('../src/Routes/transactions.js');
+const auth = require('../src/Routes/auth.js');
 const Store = require('../src/Config/Store');
 
 const app = express();
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
+app.use(auth)
 app.use(transactions)
 
 // { transaction: { merchant: "Burger King", amount: 20, time: "2019-09-10T10:05:00.000Z" } }
 
 describe('Verify transactions', () => {
 
-  it('Create transaction?', async () => {
-
-    const account = {
+  const user = {
+    account: {
       activeCard: true,
       availableLimit: 100
     }
+  }
 
-    const obj = {
-      transaction: {
-        merchant: "Burger King",
-        amount: 20,
-        time: "2019-09-10T10:05:00.000Z"
-      }
+  const obj = {
+    transaction: {
+      merchant: "Burger King",
+      amount: 20,
+      time: "2019-09-10T10:00:00.000Z"
     }
+  }
+
+  it('Validate transaction after clean base?', async () => {
+
+    Store.clear()
+
+    await request(app).post('/transaction').send(obj).then((res) => {
+      expect(res.status).toBe(400);
+      expect(res.text).toBe('uninitialized account');
+    })
+
+  });
+
+  it('Transaction happens with invalid account data?', async () => {
+
+    const activeCard_false = { account: { activeCard: false, availableLimit: 100 }}
+    await request(app).post('/auth').send(activeCard_false).then((res) => {
+      expect(res.status).toBe(200);
+      expect(res.body.account).toStrictEqual(activeCard_false.account);
+      expect(res.body.violations.length).toBe(0);
+    })
+
+    await request(app).post('/transaction').send(obj).then((res) => {
+      expect(res.status).toBe(400);
+      expect(res.body.account).toStrictEqual(activeCard_false.account);
+      expect(res.body.violations.length).toBe(1);
+      expect(res.body.violations[0]).toBe('card-not-active')
+    })
+
+    Store.clear()
+    await request(app).post('/auth').send(user).then((res) => {
+      expect(res.status).toBe(200);
+      expect(res.body.account).toStrictEqual(user.account);
+      expect(res.body.violations.length).toBe(0);
+    })
+
+    await request(app).post('/transaction').send({ transaction: { ...obj.transaction, amount: 120 }}).then((res) => {
+      expect(res.status).toBe(400);
+      expect(res.body.account).toStrictEqual(user.account);
+      expect(res.body.violations.length).toBe(1);
+      expect(res.body.violations[0]).toBe('insufficient-limit')
+    })
+
+  });
+
+  it('Create transaction?', async () => {
 
     return request(app).post('/transaction')
       .send(obj)
       .then((res) => {
         expect(res.status).toBe(200);
-        expect(res.body.account).toStrictEqual(account);
+        expect(res.body.account).toStrictEqual(user.account);
         expect(res.body.violations.length).toBe(0);
       }).catch(e => {
         console.log('Error=>', e)
       });
-  })
+  });
 
   it('Validate payload - (transaction) ?', async () => {
     const payload_verify = { other: 123 }
@@ -50,7 +97,7 @@ describe('Verify transactions', () => {
       expect(res.status).toBe(400);
       expect(res.text).toBe('transaction is not defined or not object');
     })
-  })
+  });
 
   it('Validate payload - (merchant) ?', async () => {
     const payload_verify_merchant_is_null = { transaction: { merchant: null } }
@@ -71,7 +118,7 @@ describe('Verify transactions', () => {
       expect(res.status).toBe(400);
       expect(res.text).toBe('merchant is not defined');
     })
-  })
+  });
 
   it('Validate payload - (amount) ?', async () => {
     const payload_verify_amount_is_null = { transaction: { merchant: "Burger King", amount: null } }
@@ -92,7 +139,7 @@ describe('Verify transactions', () => {
       expect(res.status).toBe(400);
       expect(res.text).toBe('amount is not defined');
     })
-  })
+  });
 
   it('Validate payload - (time) ?', async () => {
     const payload_verify_time_is_null = { transaction: { time: null, merchant: "Burger King", amount: 20 } }
@@ -113,7 +160,7 @@ describe('Verify transactions', () => {
       expect(res.status).toBe(400);
       expect(res.text).toBe('time is not defined');
     })
-  })
+  });
 
   it('Validate insert - (Account) ?', async () => {
     const payload_verify_time_is_null = { transaction: { time: null, merchant: "Burger King", amount: 20 } }
@@ -134,7 +181,37 @@ describe('Verify transactions', () => {
       expect(res.status).toBe(400);
       expect(res.text).toBe('time is not defined');
     })
-  })
+  });
+
+  it('Validate insert - (doubled-transaction) ?', async () => {
+    await request(app).post('/transaction').send({ transaction: { ...obj.transaction, time: "2019-09-10T10:01:00.000Z" }}).then((res) => {
+      expect(res.status).toBe(200);
+      expect(res.body.account).toStrictEqual(user.account);
+      expect(res.body.violations.length).toBe(0);
+    })
+
+    await request(app).post('/transaction').send({ transaction: { ...obj.transaction, time: "2019-09-10T10:02:00.000Z" }}).then((res) => {
+      expect(res.status).toBe(400);
+      expect(res.body.account).toStrictEqual(user.account);
+      expect(res.body.violations.length).toBe(1);
+      expect(res.body.violations[0]).toBe('doubled-transaction')
+    })
+  });
+
+  it('Validate insert - (high-frequency-small-interval) ?', async () => {
+    await request(app).post('/transaction').send({ transaction: { ...obj.transaction, merchant: "Habib's" }}).then((res) => {
+      expect(res.status).toBe(200);
+      expect(res.body.account).toStrictEqual(user.account);
+      expect(res.body.violations.length).toBe(0);
+    })
+
+    await request(app).post('/transaction').send({ transaction: { ...obj.transaction, merchant: "Mcdonald's", time: "2019-09-10T10:02:00.000Z" }}).then((res) => {
+      expect(res.status).toBe(400);
+      expect(res.body.account).toStrictEqual(user.account);
+      expect(res.body.violations.length).toBe(1);
+      expect(res.body.violations[0]).toBe('high-frequency-small-interval')
+    })
+  });
 
 
 });
